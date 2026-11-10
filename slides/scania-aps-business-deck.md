@@ -1,5 +1,23 @@
 # APS Failure at Scania Trucks
 
+We are predicting air-pressure-system failures (APS) in trucks for the company Scania part of TRATON SE Group worth ~€17B. Majority owned by Volkswagen. 
+
+Using a trained random forest 97.6% of actual APS failures are predicted with 35% of all our marked predictions turning out to be actual failures.
+
+Since the cost of a check is "10" per the dataset and the cost of a missed failure is "500" for x checked trucks that represents
+(500x366) prevented loss - (675x10) unncessary check costs - (366x10) necessary check cost = 172 590 net prevented loss for a cost of 3090 plus minimal 
+electricity to run the model.
+
+Technical appendix
+
+> Put in precision and recall here
+
+Do-Nothing Cost (Baseline): 375 missed failures × 500 = 187,500 cost units
+Our Policy Cost (Random Forest): (20 missed × 500) + (625 unnecessary × 10) = 16,250 cost units (with actual optimal threshold values)
+Exact Gain (Cost Avoided): 187,500 − 11,250 = 176,250 cost units saved
+
+
+
 ## Slide 1 - Conclusion
 
 Use Random Forest to rank trucks by estimated APS-failure risk.
@@ -45,6 +63,8 @@ Unit: one selected truck operating example.
 The positive class is failure of the APS component in focus. The negative class is a failure unrelated to that APS component.
 
 The label is a benchmark class, not an observed future time-stamped failure outcome.
+
+The notebook also shows a reader-friendly preview: `class` is the target, the `aa_000`-style names are anonymised operational measurements or histogram bins, and `NaN` means that a measurement is missing. The public UCI release does not reveal the physical meaning of each individual feature.
 
 ## Slide 5 - Preparation
 
@@ -136,3 +156,6 @@ These are challenge-unit scenarios. They do not establish causal savings or real
 - Protected-group attributes are not supplied; the subgroup audit compares missingness burden only.
 - Notebook: `notebooks/scania_aps_failure.ipynb`.
 - Executed notebook: `notebooks/scania_aps_failure.executed.ipynb`.
+
+## Appendix 5 - 
+![1794294589285](image/scania-aps-business-deck/1794294589285.png)

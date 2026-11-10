@@ -1,0 +1,12 @@
+original_column,reader_friendly_name,meaning
+class,target: APS component failure class,pos means failure of the APS component in focus; neg means a failure unrelated to that APS component.
+aa_000,aa_000: anonymised operational value,A numerical operational sensor/counter or histogram-bin value. The public UCI release does not disclose the physical name of this individual feature.
+ab_000,ab_000: anonymised operational value,A numerical operational sensor/counter or histogram-bin value. The public UCI release does not disclose the physical name of this individual feature.
+ac_000,ac_000: anonymised operational value,A numerical operational sensor/counter or histogram-bin value. The public UCI release does not disclose the physical name of this individual feature.
+ad_000,ad_000: anonymised operational value,A numerical operational sensor/counter or histogram-bin value. The public UCI release does not disclose the physical name of this individual feature.
+ae_000,ae_000: anonymised operational value,A numerical operational sensor/counter or histogram-bin value. The public UCI release does not disclose the physical name of this individual feature.
+af_000,af_000: anonymised operational value,A numerical operational sensor/counter or histogram-bin value. The public UCI release does not disclose the physical name of this individual feature.
+ag_000,ag_000: anonymised operational value,A numerical operational sensor/counter or histogram-bin value. The public UCI release does not disclose the physical name of this individual feature.
+ag_001,ag_001: anonymised operational value,A numerical operational sensor/counter or histogram-bin value. The public UCI release does not disclose the physical name of this individual feature.
+ag_002,ag_002: anonymised operational value,A numerical operational sensor/counter or histogram-bin value. The public UCI release does not disclose the physical name of this individual feature.
+NaN,missing measurement,The source recorded no value for that measurement; the modelling pipeline imputes it and adds a missingness indicator.

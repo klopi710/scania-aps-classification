@@ -112,6 +112,53 @@ cells = [
         official_test_frame = load_raw_data(OFFICIAL_TEST_PATH)
         print('Training-data preview:')
         display(training_frame.head())
+
+        # The UCI release deliberately anonymises the operational feature names.
+        # Keep the raw preview above for reproducibility, then show a smaller
+        # reader-friendly preview without inventing physical meanings that the
+        # public dataset does not disclose.
+        PREVIEW_COLUMNS = [
+            'class', 'aa_000', 'ab_000', 'ac_000', 'ad_000',
+            'ae_000', 'af_000', 'ag_000', 'ag_001', 'ag_002',
+        ]
+        PREVIEW_RENAMES = {
+            'class': 'target: APS component failure class',
+            **{
+                column: f'{column}: anonymised operational value'
+                for column in PREVIEW_COLUMNS
+                if column != 'class'
+            },
+        }
+        preview_columns = [column for column in PREVIEW_COLUMNS if column in training_frame.columns]
+        renamed_preview = training_frame[preview_columns].head().rename(columns=PREVIEW_RENAMES)
+        column_guide = pd.DataFrame([
+            {
+                'original_column': 'class',
+                'reader_friendly_name': 'target: APS component failure class',
+                'meaning': 'pos means failure of the APS component in focus; neg means a failure unrelated to that APS component.',
+            },
+            *[
+                {
+                    'original_column': column,
+                    'reader_friendly_name': f'{column}: anonymised operational value',
+                    'meaning': 'A numerical operational sensor/counter or histogram-bin value. The public UCI release does not disclose the physical name of this individual feature.',
+                }
+                for column in preview_columns
+                if column != 'class'
+            ],
+            {
+                'original_column': 'NaN',
+                'reader_friendly_name': 'missing measurement',
+                'meaning': 'The source recorded no value for that measurement; the modelling pipeline imputes it and adds a missingness indicator.',
+            },
+        ])
+        print('Reader-friendly preview: what the rows and columns mean:')
+        display(renamed_preview)
+        display(column_guide)
+        PROCESSED_DIR = ROOT / 'data' / 'processed'
+        PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
+        renamed_preview.to_csv(PROCESSED_DIR / 'renamed_dataset_preview.csv', index=False)
+        column_guide.to_csv(PROCESSED_DIR / 'preview_column_guide.csv', index=False)
         print(f'Training shape: {training_frame.shape}; official test shape: {official_test_frame.shape}')
         validate_schema(training_frame, require_full_training_size=True)
         validate_schema(official_test_frame)
