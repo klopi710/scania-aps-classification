@@ -9,3 +9,4 @@ nbformat>=5.10,<6
 nbclient>=0.10,<1
 ipykernel>=6.29,<7
 jupyterlab>=4.4,<5
+python-pptx>=1.0,<2
