@@ -1,0 +1,8 @@
+operating point,threshold rule,reason,inspections,inspection_rate,tp,fp,fn,tn,precision,recall,f1,unnecessary_inspection_cost,missed_failure_cost,total_cost,all_negative_baseline_cost,cost_avoided_vs_all_negative
+default threshold 0.50,score >= 0.500000,Required reference point where meaningful,467,0.0291875,316,151,59,15474,0.6766595289079229,0.8426666666666667,0.7505938242280285,1510.0,29500.0,31010.0,187500.0,156490.0
+high-recall point,score >= 0.268461,Development threshold targeting at least 90% recall,681,0.0425625,354,327,21,15298,0.5198237885462555,0.944,0.6704545454545454,3270.0,10500.0,13770.0,187500.0,173730.0
+mid-range point,score >= 0.200000,Additional operating point,762,0.047625,360,402,15,15223,0.47244094488188976,0.96,0.633245382585752,4020.0,7500.0,11520.0,187500.0,175980.0
+high-precision point,score >= 0.720660,Development threshold targeting at least 80% precision where feasible,283,0.0176875,238,45,137,15580,0.8409893992932862,0.6346666666666667,0.723404255319149,450.0,68500.0,68950.0,187500.0,118550.0
+cost-aware point,score >= 0.096048,Lowest development challenge cost,1037,0.0648125,367,670,8,14955,0.35390549662487947,0.9786666666666667,0.5198300283286119,6700.0,4000.0,10700.0,187500.0,176800.0
+capacity-constrained ranking point,score >= 0.035950,Illustrative top-10% inspection capacity,1610,0.100625,373,1237,2,14388,0.23167701863354037,0.9946666666666667,0.3758186397984887,12370.0,1000.0,13370.0,187500.0,174130.0
+capacity-constrained exact top-10%,rank highest 10% exactly,Exact capacity policy; boundary score is diagnostic,1600,0.1,373,1227,2,14398,0.233125,0.9946666666666667,0.3777215189873418,12270.0,1000.0,13270.0,187500.0,174230.0

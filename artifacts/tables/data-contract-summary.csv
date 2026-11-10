@@ -1,0 +1,19 @@
+dataset,check,result
+labelled development/training,rows,60000.0
+labelled development/training,columns,171.0
+labelled development/training,features,170.0
+labelled development/training,positive_failures,1000.0
+labelled development/training,negative_unrelated_failures,59000.0
+labelled development/training,positive_rate,0.016666666666666666
+labelled development/training,missing_cells,850015.0
+labelled development/training,duplicate_rows,0.0
+labelled development/training,constant_features,0.0
+official frozen test,rows,16000.0
+official frozen test,columns,171.0
+official frozen test,features,170.0
+official frozen test,positive_failures,375.0
+official frozen test,negative_unrelated_failures,15625.0
+official frozen test,positive_rate,0.0234375
+official frozen test,missing_cells,228680.0
+official frozen test,duplicate_rows,0.0
+official frozen test,constant_features,0.0
