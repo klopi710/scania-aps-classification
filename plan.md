@@ -16,22 +16,24 @@ Repurpose the credit-risk assignment workflow for the UCI APS Failure at Scania 
 1. Import the data and libraries; set a fixed seed and record versions.
 2. Keep the official labelled training/test separation before learning any imputation or scaling values; use the full training file for development OOF selection and the official test file once for confirmation.
 3. Define the prediction moment, positive class, feature schema and leakage boundary.
-4. Audit missing values, duplicates, constants, class imbalance and feature families. Treat `na` as missing; do not delete rows merely because sensor values are missing.
-5. Build leakage-safe preprocessing pipelines. Numeric median imputation and missingness indicators are fitted on development folds only; scaling is used for linear models and not treated as a business transformation.
-6. Fit the same baseline/model comparison pattern: majority baseline, logistic regression, decision tree and random forest. Add class weighting only where it is explicitly recorded and compare it fairly.
-7. Generate development out-of-fold probabilities. Compare ROC-AUC, average precision, recall, precision, F1, balanced accuracy, calibration/Brier score and the Scania total-cost metric.
-8. Analyse operating points rather than presenting one arbitrary 0.50 cutoff. Show 0.50 where meaningful, a high-recall point, a high-precision point, a cost-aware point, a capacity/ranking point and the recommended point.
-9. Build the required threshold table with confusion counts, inspection rate, precision, recall, F1, false-negative cost, false-positive cost, total challenge cost and cost avoided against an all-negative baseline.
-10. Freeze the selected model and policy using development evidence only; evaluate them once on the official frozen test.
-11. Add ROC and precision-recall plots, confusion matrices, a cost-versus-threshold plot, feature/missingness diagnostics and a compact governance limitation section.
-12. Run sensitivity analysis for the two challenge costs and for an explicit inspection-capacity scenario. Do not invent euros or causal failure-prevention claims.
-13. Produce a clean, restartable notebook, a README, a reproducibility manifest, tests and a concise business-facing conclusion.
+4. Display an early training-data preview; audit missing values, duplicates, constants, class imbalance and feature families. Treat `na` as missing; do not delete rows merely because sensor values are missing.
+5. Detect feature-wise outliers. Use z-score +/-3 for approximately symmetric features and Tukey 1.5 x IQR for skewed/non-normal features; clip values inside each training fold rather than deleting rows.
+6. Build leakage-safe preprocessing pipelines. Outlier clipping, numeric median imputation and missingness indicators are fitted on development folds only; scaling is used for linear models and not treated as a business transformation.
+7. Fit the same baseline/model comparison pattern: majority baseline, logistic regression, decision tree and random forest. Add class weighting only where it is explicitly recorded and compare it fairly.
+8. Generate development out-of-fold probabilities. Compare ROC-AUC, average precision, recall, precision, F1, balanced accuracy, calibration/Brier score and the Scania total-cost metric.
+9. Analyse operating points rather than presenting one arbitrary 0.50 cutoff. Show 0.50 where meaningful, a high-recall point, a high-precision point, a cost-aware point, a capacity/ranking point and the recommended point.
+10. Build the required threshold table with confusion counts, inspection rate, precision, recall, F1, false-negative cost, false-positive cost, total challenge cost and cost avoided against an all-negative baseline.
+11. Freeze the selected model and policy using development evidence only; evaluate them once on the official frozen test.
+12. Add ROC and precision-recall plots, confusion matrices, a cost-versus-threshold plot, feature/missingness/outlier diagnostics and a compact governance limitation section.
+13. Run sensitivity analysis for the two challenge costs and for an explicit inspection-capacity scenario. Do not invent euros or causal failure-prevention claims.
+14. Produce a clean, restartable notebook, a README, a reproducibility manifest, tests and a concise business-facing conclusion.
 
 ## Acceptance criteria
 
 - The notebook runs from a clean kernel after downloading/extracting both official labelled CSV files automatically when either is absent.
 - No credit-risk names, assumptions, target mappings or Euro calculations remain in the Scania project.
 - The positive class and cost matrix are defined visibly in the notebook.
+- The notebook displays a dataset preview and records the feature-wise outlier rule and audit table.
 - Model and policy selection use development data only; the official frozen test is confirmation only.
 - The recommended decision is cost-based and explicitly labelled as conditional challenge-unit arithmetic.
 - All generated artefacts are under this project folder; the original credit-risk files remain untouched.
@@ -50,7 +52,8 @@ Repurpose the credit-risk assignment workflow for the UCI APS Failure at Scania 
 
 - Official archive integrity check passed (`zip.testzip() is None`).
 - Clean notebook execution produced `notebooks/scania_aps_failure.executed.ipynb` with zero error outputs.
-- Unit tests: 4 passed.
-- Development selection: Random Forest, development ROC-AUC 0.9814, average precision 0.7364, best grid threshold approximately 0.0963.
-- Official-test confirmation at the development-selected cost-aware point: 367 true positives, 670 false positives, 8 false negatives, 14,955 true negatives, total cost 10,700 units.
+- Unit tests: 5 passed, including the outlier-rule test.
+- Outlier audit: 118 features use IQR, 6 use z-score and 46 have insufficient variation for clipping; rows are not deleted.
+- Development selection: Random Forest, development ROC-AUC 0.9828, average precision 0.7048, best grid threshold approximately 0.1414.
+- Official-test confirmation at the development-selected cost-aware point: 366 true positives, 675 false positives, 9 false negatives, 14,950 true negatives, total cost 11,250 units.
 - Remaining limitation: the labels are benchmark APS-component classes rather than a future time-stamped failure horizon; the official labelled test is a stronger benchmark confirmation, not proof of deployment performance.

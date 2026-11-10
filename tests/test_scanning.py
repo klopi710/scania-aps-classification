@@ -3,7 +3,7 @@ import pandas as pd
 
 from src.cost_policy import challenge_metrics, top_k_metrics
 from src.data_contract import make_xy, validate_schema
-from src.preprocessing import make_numeric_preprocessor
+from src.preprocessing import OutlierClipper, build_outlier_audit, make_numeric_preprocessor
 
 
 def tiny_frame():
@@ -42,3 +42,21 @@ def test_preprocessor_is_constructed_for_numeric_features():
     transformed = preprocessor.fit_transform(pd.DataFrame({"f1": [1, np.nan], "f2": [2, 3]}))
     assert transformed.shape[0] == 2
     assert np.isfinite(transformed).all()
+
+
+def test_outlier_rules_use_iqr_for_skewed_and_z_score_for_symmetric_data():
+    rng = np.random.default_rng(77)
+    symmetric = rng.normal(size=500)
+    skewed = rng.exponential(size=500)
+    frame = pd.DataFrame({"symmetric": symmetric, "skewed": skewed})
+
+    audit = build_outlier_audit(frame)
+    rules = dict(zip(audit["feature"], audit["method"]))
+    assert rules["symmetric"] == "z-score"
+    assert rules["skewed"] == "IQR"
+
+    clipper = OutlierClipper().fit(frame)
+    transformed = clipper.transform(pd.DataFrame({"symmetric": [100.0], "skewed": [100.0]}))
+    assert np.isfinite(transformed).all()
+    assert transformed[0, 0] < 100.0
+    assert transformed[0, 1] < 100.0

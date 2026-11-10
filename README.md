@@ -23,7 +23,7 @@ python -m pytest -q
 python -m nbconvert --to notebook --execute notebooks/scania_aps_failure.ipynb --output scania_aps_failure.executed.ipynb --ExecutePreprocessor.timeout=900
 ```
 
-The notebook downloads the official UCI archive into `data/raw/` if either labelled CSV is absent. The full labelled training file is used for development out-of-fold model and threshold selection; the separate labelled official test file is used once for frozen confirmation. Running it from a clean kernel creates the figures, tables and manifest under this project folder.
+The notebook displays an early `head()` preview of the training data, then downloads the official UCI archive into `data/raw/` if either labelled CSV is absent. The full labelled training file is used for development out-of-fold model and threshold selection; the separate labelled official test file is used once for frozen confirmation. Feature-wise outliers are capped inside each training fold: approximately symmetric features use z-score +/-3, while skewed/non-normal features use Tukey's 1.5 x IQR rule. Rows are not deleted. Running it from a clean kernel creates the figures, tables and manifest under this project folder.
 
 ## Important limitation
 

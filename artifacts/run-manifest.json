@@ -6,6 +6,7 @@
   "split": "60,000 labelled training rows for development; 16,000 labelled official test rows for frozen confirmation",
   "selected_model": "random_forest",
   "recommended_policy": "development cost-aware threshold, confirmed once on official frozen test",
+  "outlier_policy": "feature-wise z-score +/-3 for approximately symmetric features; Tukey IQR 1.5x for skewed/non-normal features; clip inside each training fold",
   "cost_unnecessary_inspection": 10.0,
   "cost_missed_failure": 500.0,
   "python": "3.14.2",

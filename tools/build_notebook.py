@@ -91,6 +91,7 @@ cells = [
         )
         from src.evaluation import binary_metrics, evaluate_model_set
         from src.models import make_candidate_models
+        from src.preprocessing import build_outlier_audit
 
         print(f'Project root: {ROOT}')
         print(f'Training source: {TRAIN_PATH}')
@@ -109,6 +110,9 @@ cells = [
         """
         training_frame = load_raw_data(TRAIN_PATH)
         official_test_frame = load_raw_data(OFFICIAL_TEST_PATH)
+        print('Training-data preview:')
+        display(training_frame.head())
+        print(f'Training shape: {training_frame.shape}; official test shape: {official_test_frame.shape}')
         validate_schema(training_frame, require_full_training_size=True)
         validate_schema(official_test_frame)
         X_dev, y_dev = make_xy(training_frame)
@@ -154,6 +158,8 @@ cells = [
         ## 4. Data cleaning and missingness audit
 
         Missing sensor values are part of the operational-data problem. We do not delete rows or fill values using the whole dataset. Median imputation and missingness indicators are fitted inside each model pipeline using development data only. Duplicate rows and constant predictors are checked before modelling.
+
+        Outliers are detected feature by feature on development data. Approximately symmetric features use a z-score bound of +/-3 standard deviations. Skewed/non-normal features use Tukey's IQR rule (1.5 x IQR). We cap extreme values inside each training fold rather than deleting trucks; the official test remains untouched until confirmation.
         """),
     code(
         """
@@ -168,6 +174,11 @@ cells = [
         })
         display(cleaning_report)
 
+        FIGURES = ROOT / 'figures'
+        TABLES = ROOT / 'artifacts' / 'tables'
+        FIGURES.mkdir(parents=True, exist_ok=True)
+        TABLES.mkdir(parents=True, exist_ok=True)
+
         missingness = X_dev.isna().mean().sort_values(ascending=False)
         display(missingness.head(15).rename('missing share').to_frame())
         plt.figure(figsize=(10, 4))
@@ -175,11 +186,25 @@ cells = [
         plt.title('Development missingness: 25 most incomplete operational features')
         plt.xlabel('Share of rows missing')
         plt.tight_layout()
-        FIGURES = ROOT / 'figures'
-        TABLES = ROOT / 'artifacts' / 'tables'
-        FIGURES.mkdir(parents=True, exist_ok=True)
-        TABLES.mkdir(parents=True, exist_ok=True)
         plt.savefig(FIGURES / 'missingness.png', dpi=160)
+        plt.show()
+
+        outlier_audit = build_outlier_audit(X_dev)
+        display(outlier_audit.head(15))
+        display(outlier_audit.groupby('method', dropna=False).agg(
+            features=('feature', 'count'),
+            flagged_values=('flagged_count', 'sum'),
+            average_flagged_rate=('flagged_rate', 'mean'),
+        ).reset_index())
+        outlier_audit.to_csv(TABLES / 'outlier-audit.csv', index=False)
+        plt.figure(figsize=(10, 4))
+        outlier_audit.head(20).sort_values('flagged_rate').plot.barh(
+            x='feature', y='flagged_rate', legend=False, color='#f58518'
+        )
+        plt.title('Development outlier flags: 20 highest feature rates')
+        plt.xlabel('Share of observed values flagged')
+        plt.tight_layout()
+        plt.savefig(FIGURES / 'outlier-flags.png', dpi=160)
         plt.show()
         del training_frame, official_test_frame
         """
@@ -187,7 +212,7 @@ cells = [
     md("""
         ## 5. Candidate models and leakage-safe pipelines
 
-        The same comparison logic is retained from the credit-risk assignment: a majority baseline, logistic regression, a decision tree and a random forest. The rare positive class requires class weighting for the non-baseline candidates. All imputation, missingness indicators and scaling are inside the pipeline, so cross-validation cannot learn from the validation fold.
+        The same comparison logic is retained from the credit-risk assignment: a majority baseline, logistic regression, a decision tree and a random forest. The rare positive class requires class weighting for the non-baseline candidates. Outlier clipping, imputation, missingness indicators and scaling are inside the pipeline, so cross-validation cannot learn from the validation fold.
         """),
     code(
         """
@@ -416,7 +441,7 @@ cells = [
     md("""
         ## 11. Reproducibility and limitations
 
-        The run uses random seed 77, development out-of-fold predictions on the full labelled training file for model/policy selection, and one confirmation on the separate labelled official test file. The official test file is never used to fit preprocessing, select the model or tune the threshold.
+        The run uses random seed 77, development out-of-fold predictions on the full labelled training file for model/policy selection, and one confirmation on the separate labelled official test file. Outlier bounds, imputation values and scaling parameters are fitted inside each development fold. The official test file is never used to fit preprocessing, select the model or tune the threshold.
 
         The target is a benchmark class label, not a future failure horizon. Before real deployment, validate timestamp availability, prospective failure outcomes, inspection effectiveness, operational drift, alarm fatigue and whether the model changes maintenance decisions safely. Human maintenance oversight remains required.
         """),
@@ -434,6 +459,7 @@ cells = [
             'split': '60,000 labelled training rows for development; 16,000 labelled official test rows for frozen confirmation',
             'selected_model': selected_model,
             'recommended_policy': 'development cost-aware threshold, confirmed once on official frozen test',
+            'outlier_policy': 'feature-wise z-score +/-3 for approximately symmetric features; Tukey IQR 1.5x for skewed/non-normal features; clip inside each training fold',
             'cost_unnecessary_inspection': COST_UNNECESSARY_INSPECTION,
             'cost_missed_failure': COST_MISSED_FAILURE,
             'python': platform.python_version(),

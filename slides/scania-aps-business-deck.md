@@ -1,133 +1,138 @@
 # APS Failure at Scania Trucks
 
-## Slide 1 — Decision
+## Slide 1 - Conclusion
 
-Use a Random Forest to rank trucks by estimated APS-failure risk and prioritise mechanic inspection.
+Use Random Forest to rank trucks by estimated APS-failure risk.
 
-The development-selected cost-aware threshold was approximately **0.096**. On the official frozen test, it inspected **1,037 of 16,000 trucks**, captured **367 of 375 APS-failure cases**, and missed **8**.
+Send the highest-risk cases to mechanic inspection.
 
-This is a maintenance prioritisation aid. It does not automatically declare a truck safe, unsafe or ready to operate. A mechanic remains responsible for the final inspection decision.
+Do not automatically declare a truck safe or unsafe.
 
-## Slide 2 — Why this matters
+Official test at the development-selected cost-aware threshold: **35.2% precision**, **97.6% recall**, **51.7% F1** and **1,041 inspections out of 16,000 trucks**.
 
-The Air Pressure System supports functions such as braking and gear changes.
+## Slide 2 - Operational conclusion
 
-- The positive class is an APS component failure.
-- The negative class is a truck with a failure unrelated to that APS component.
-- Missing a faulty truck may cause a breakdown.
-- An unnecessary mechanic check consumes time and capacity.
-
-The costs are deliberately asymmetric:
+The Scania cost matrix makes a missed APS failure 50 times more expensive than an unnecessary inspection.
 
 - Unnecessary inspection: **10 challenge cost units**.
 - Missed faulty truck: **500 challenge cost units**.
+- Recommended official-test cost: **11,250 units**.
+- Cost avoided versus inspecting nobody: **176,250 units**.
 
-The missed failure is therefore **50 times more expensive** than the unnecessary inspection.
+The result is conditional challenge-unit arithmetic, not measured causal savings. A mechanic remains responsible for the final decision.
 
-## Slide 3 — Data and modelling approach
-
-The UCI training file contains:
-
-- **60,000 labelled truck examples**;
-- **170 anonymised operational predictors**;
-- **1,000 positive APS failures** and **59,000 negative examples**;
-- substantial missing sensor values, represented by `na`.
-
-We used the full 60,000-row labelled training file for development out-of-fold selection and the separate labelled 16,000-row official UCI test file for one frozen confirmation. Missing values and missingness indicators are fitted inside leakage-safe pipelines using development data only.
-
-The comparison includes a majority baseline, Logistic Regression, Decision Tree and Random Forest.
-
-## Slide 4 — Model selection
-
-Random Forest was selected using development out-of-fold evidence and the Scania cost criterion.
+## Slide 3 - Required operating-point and model table
 
 | Model | Development ROC-AUC | Development average precision | Best development cost | Cost avoided vs all-negative baseline |
 |---|---:|---:|---:|---:|
-| Random Forest | 0.981 | 0.736 | 44,080 | 455,920 |
-| Logistic Regression | 0.943 | 0.713 | 79,870 | 420,130 |
-| Decision Tree | 0.892 | 0.463 | 79,360 | 420,640 |
+| Random Forest | 0.983 | 0.705 | 46,220 | 453,780 |
+| Logistic Regression | 0.968 | 0.668 | 67,900 | 432,100 |
+| Decision Tree | 0.932 | 0.567 | 82,280 | 417,720 |
 | Majority baseline | 0.500 | 0.017 | 500,000 | 0 |
 
-The official test was not used to choose the model or threshold.
+Random Forest was selected using development out-of-fold evidence. The official test was not used to select the model or threshold.
 
-## Slide 5 — Official frozen-test result
+## Slide 4 - Data and target
 
-At the development-selected Random Forest threshold of approximately **0.096**:
+UCI APS Failure at Scania Trucks.
 
-- **Inspected:** 1,037 of 16,000 trucks;
-- **True positives:** 367;
-- **False positives:** 670;
-- **False negatives:** 8;
-- **True negatives:** 14,955;
-- **Precision:** 35.4%;
-- **Recall:** 97.9%;
-- **Total cost:** 10,700 challenge units;
-- **Cost avoided versus inspecting nobody:** 176,800 challenge units.
+60,000 labelled training examples. 170 anonymised operational predictors. 1,000 positive APS failures and 59,000 negative examples.
 
-This is an official frozen-test confirmation, not measured real-world savings.
+The separate official test file contains 16,000 labelled examples, including 375 positive APS failures.
 
-## Slide 6 — Why the threshold is not automatically 0.50
+Unit: one selected truck operating example.
 
-The threshold controls the trade-off:
+The positive class is failure of the APS component in focus. The negative class is a failure unrelated to that APS component.
 
-- At **0.50**, the official test inspects 467 trucks, captures 316 failures and misses 59. Total cost: **31,010**.
-- At **0.096**, the official test inspects 1,037 trucks, captures 367 failures and misses 8. Total cost: **10,700**.
-- At an illustrative **top-10% capacity policy**, the official test inspects exactly 1,600 trucks, captures 373 failures and misses 2. Total cost: **13,270**.
+The label is a benchmark class, not an observed future time-stamped failure outcome.
 
-The selected threshold is lower because a missed APS failure is much more expensive than an unnecessary inspection.
+## Slide 5 - Preparation
 
-## Slide 7 — Recommendation and safeguards
+The first data-loading code cell displays `training_frame.head()` and the dataset shapes before modelling.
 
-Use Random Forest as an inspection-prioritisation layer alongside the existing maintenance workflow.
+The full 60,000-row training file supplies development out-of-fold predictions. The separate 16,000-row official test file remains unavailable for model and threshold selection.
 
-1. Rank trucks by APS-failure score.
-2. Send cases above the validated operating threshold to mechanic inspection.
-3. Keep human decision authority and record inspection outcomes.
-4. Monitor false negatives, inspection workload, missingness, calibration and drift.
-5. Revalidate prospectively before changing maintenance scheduling or declaring the model production-ready.
+Missing `na` values are handled by median imputation and missingness indicators inside the pipeline.
 
-The UCI label is a benchmark class, not a future time-stamped failure outcome. The cost result is conditional challenge-unit arithmetic.
+Outlier clipping is also inside each pipeline, so bounds are learned only from the relevant training fold.
 
-## Slide 8 — Final answer
+No rows are deleted because an unusual sensor value may be a genuine operational signal.
 
-The public Scania dataset supports a meaningful classification case because it combines many operational predictors, a real positive failure class, severe imbalance and an explicit asymmetric cost function.
+## Slide 6 - Models and validation
 
-Random Forest gives the strongest development ranking and cost result in this implementation. The model appears useful for prioritising scarce mechanic attention, but one official test set is not enough to prove deployment performance.
+Candidates: majority baseline, Logistic Regression, Decision Tree and Random Forest.
 
-**Operational next step:** obtain timestamped prospective outcomes and test whether the inspection policy reduces missed APS failures without creating unacceptable mechanic workload.
+The positive class is rare, so class weighting is used for the non-baseline models.
 
-## Appendix 1 — Metrics and curves
+Random Forest was selected on development data using the asymmetric Scania cost criterion. ROC-AUC, average precision, recall, precision, F1, calibration and cost were checked.
 
-ROC-AUC evaluates how well the model orders positive APS failures above negative examples across possible score cutoffs. Average precision summarises the precision-recall trade-off and should be compared with the positive base rate of approximately 1.67%.
+The official test is scored once after the model and operating policy are frozen.
 
-The ROC and precision-recall curves are generated in `figures/roc-pr-curves.png`.
+## Slide 7 - Outliers and sensitivity
 
-## Appendix 2 — Required operating-point table
+Outliers were detected feature by feature:
 
-The executed notebook contains the full table with threshold rule, inspection count/rate, TP, FP, FN, TN, precision, recall, F1, unnecessary-inspection cost, missed-failure cost, total cost and cost avoided.
+- Approximately symmetric features: z-score limits of **mean +/- 3 standard deviations**.
+- Skewed/non-normal features: Tukey's **1.5 x IQR** rule.
+- **118** features use IQR, **6** use z-score and **46** have insufficient variation for clipping.
 
-The six diagnostic points are: threshold 0.50, high recall, mid-range, high precision, cost-aware, and illustrative capacity-constrained ranking. The capacity point is labelled illustrative because the public UCI case does not specify an actual inspection capacity.
+Extreme values are capped inside the training pipeline; observations are not removed.
 
-## Appendix 3 — Sensitivity analysis
+Sensitivity changes the challenge-cost assumptions, not the model predictions. The recommendation remains cost-saving under lower missed-failure cost, severe missed-failure cost and expensive inspection scenarios.
 
-At the recommended official frozen-test policy:
+## Slide 8 - Policy and governance
+
+Rank trucks by the Random Forest APS-failure score.
+
+Use the development-selected score threshold of approximately **0.146** for the recommended policy. At the official test this gives:
+
+- TP=366, FP=675, FN=9, TN=14,950.
+- Precision=35.2%; recall=97.6%.
+
+Keep human decision authority. Record inspection outcomes. Monitor false negatives, inspection workload, missingness, calibration, drift and subgroup error rates.
+
+The missingness-burden audit is diagnostic only; no protected-group attributes are available.
+
+## Slide 9 - Recommendation
+
+Use Random Forest as an inspection-prioritisation aid alongside the existing maintenance workflow.
+
+The model captures most labelled APS-failure cases at the recommended cost-aware point, but the benchmark label does not prove that inspections prevent future breakdowns.
+
+Before deployment, obtain timestamped prospective outcomes, actual inspection results and operational cost data. Validate whether the policy reduces missed APS failures without creating unacceptable mechanic workload.
+
+## Appendix 1 - Metrics and curves
+
+ROC-AUC evaluates how well the model ranks APS-failure examples above unrelated-failure examples over many possible cutoffs.
+
+Average precision summarises the precision-recall behaviour and should be compared with the positive base rate of approximately 1.67% in the training data.
+
+The notebook generates `figures/roc-pr-curves.png`, the ROC curve and precision-recall curve.
+
+## Appendix 2 - Required operating-point table
+
+The executed notebook contains the complete table with threshold rule, inspection count/rate, TP, FP, FN, TN, precision, recall, F1, unnecessary-inspection cost, missed-failure cost, total cost and cost avoided.
+
+The diagnostic points include threshold 0.50, high recall, mid-range, high precision, cost-aware and illustrative top-10% capacity policies. The UCI case does not specify a real inspection capacity, so the capacity policy is explicitly illustrative.
+
+## Appendix 3 - Sensitivity analysis
 
 | Scenario | Unnecessary inspection cost | Missed failure cost | Total cost | Cost avoided vs all-negative |
 |---|---:|---:|---:|---:|
-| Official base | 10 | 500 | 10,700 | 176,800 |
-| Lower missed-failure cost | 10 | 350 | 9,500 | 121,750 |
-| Severe missed-failure cost | 10 | 750 | 12,700 | 268,550 |
-| Expensive inspection | 50 | 500 | 37,500 | 150,000 |
+| Official base | 10 | 500 | 11,250 | 176,250 |
+| Lower missed-failure cost | 10 | 350 | 9,900 | 121,350 |
+| Severe missed-failure cost | 10 | 750 | 13,500 | 267,750 |
+| Expensive inspection | 50 | 500 | 38,250 | 149,250 |
 
-The recommendation remains cost-saving under these conditional scenarios, but the arithmetic does not establish causal savings.
+These are challenge-unit scenarios. They do not establish causal savings or real-world profitability.
 
-## Appendix 4 — Governance and reproducibility
+## Appendix 4 - Governance and reproducibility
 
-- The predictors are anonymised operational variables; protected-group attributes are not supplied.
-- The subgroup audit therefore compares higher versus lower missingness burden only. It is not a fairness certification.
 - Seed: **77**.
-- Split: 60,000 labelled training rows for development; 16,000 labelled official test rows for frozen confirmation.
+- Development: 60,000 labelled training rows with out-of-fold model and policy selection.
+- Confirmation: 16,000 labelled official test rows scored once after freezing.
 - Missing values: median imputation and missingness indicators inside pipelines.
-- The official 16,000-row UCI test file is labelled and is scored once after model and threshold selection.
+- Outliers: feature-wise IQR or z-score clipping inside each training fold.
+- Protected-group attributes are not supplied; the subgroup audit compares missingness burden only.
 - Notebook: `notebooks/scania_aps_failure.ipynb`.
 - Executed notebook: `notebooks/scania_aps_failure.executed.ipynb`.
